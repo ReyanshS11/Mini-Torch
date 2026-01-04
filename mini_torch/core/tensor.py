@@ -3,9 +3,12 @@ import numpy as np
 class Tensor:
     def __init__(self, data, requires_grad=False):
         self.data = np.asarray(data)
-        self.requires_grad = requires_grad
+        self.shape = self.data.shape
+        self.size = self.data.size
 
+        self.requires_grad = requires_grad
         self.grad = None
+
         self._prev = set()
         self._backward = lambda: None
 
@@ -90,7 +93,7 @@ class Tensor:
         out._backward = _backward
         return out
     
-    def sum(self):
+    def sum(self) -> Tensor:
         out = Tensor(self.data.sum(), requires_grad=self.requires_grad)
         out._prev = {self}
 
@@ -102,7 +105,19 @@ class Tensor:
         out._backward = _backward
         return out
     
-    def backward(self):
+    def mean(self) -> Tensor:
+        out = Tensor(self.data.mean(), requires_grad=self.requires_grad)
+        out._prev = {self}
+
+        def _backward():
+            if self.requires_grad:
+                grad = np.ones_like(self.data) * (out.grad / self.size) # type: ignore
+                self.grad = self.grad + grad if self.grad is not None else grad
+        
+        out._backward = _backward
+        return out
+    
+    def backward(self) -> None:
         if self.data.ndim != 0:
             raise RuntimeError(
                 "grad can be implicitly created only for scalar outputs"
@@ -123,16 +138,27 @@ class Tensor:
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
+        def unbroadcast(grad, shape):
+            while grad.ndim > len(shape):
+                grad = grad.sum(axis=0)
+            
+            for i, s in enumerate(shape):
+                if s == 1:
+                    grad  = grad.sum(axis=i, keepdims=True)
+
+            return grad
+
         for t in reversed(topo):
             t._backward()
-
-    def shape(self):
-        return self.data.shape
+            t.grad = unbroadcast(t.grad, t.shape)
     
 if __name__ == "__main__":
-    x = Tensor([1.0, 2.0, 3.0], requires_grad=True)
-    y = x * x
-    z = y.sum()
-    z.backward()
+    x = Tensor([[1], [2], [3]], requires_grad=True)
+    y = Tensor([[10, 20, 30, 40]], requires_grad=True)
 
-    print(x.grad)  # [2, 4, 6]
+    z = x + y
+    loss = z.sum()
+    loss.backward()
+
+    print(x.grad)  # [[4], [4], [4]]
+    print(y.grad)  # [[3, 3, 3, 3]]

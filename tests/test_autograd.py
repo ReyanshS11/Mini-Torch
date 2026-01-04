@@ -49,6 +49,34 @@ class TestAutogradBasic(unittest.TestCase):
         self.assertEqual(x.grad, 0.5)
         self.assertEqual(y.grad, -1.5)
 
+    def test_broadcast_add(self):
+        x = Tensor([[1.0], [2.0], [3.0]], requires_grad=True)
+        y = Tensor([[10.0, 20.0, 30.0, 40.0]], requires_grad=True)
+
+        z = x + y
+        loss = z.sum()
+        loss.backward()
+
+        np.testing.assert_array_equal(
+            x.grad,
+            np.array([[4.0], [4.0], [4.0]])
+        )
+
+        np.testing.assert_array_equal(
+            y.grad,
+            np.array([[3.0, 3.0, 3.0, 3.0]])
+        )
+
+    def test_scalar_broadcast(self):
+        x = Tensor(2.0, requires_grad=True)
+        y = Tensor([1.0, 2.0, 3.0], requires_grad=True)
+
+        z = x * y
+        loss = z.sum()
+        loss.backward()
+
+        self.assertEqual(x.grad, 6.0)
+        np.testing.assert_array_equal(y.grad, np.array([2.0, 2.0, 2.0]))
 
 class TestSum(unittest.TestCase):
 
@@ -75,7 +103,6 @@ class TestSum(unittest.TestCase):
             np.array([2.0, 4.0, 6.0])
         )
 
-
 class TestGraphStructure(unittest.TestCase):
 
     def test_shared_subgraph(self):
@@ -98,7 +125,6 @@ class TestGraphStructure(unittest.TestCase):
         # dz/dx = 3x^2 = 27
         self.assertEqual(x.grad, 27.0)
 
-
 class TestBackwardErrors(unittest.TestCase):
 
     def test_backward_non_scalar_raises(self):
@@ -108,7 +134,6 @@ class TestBackwardErrors(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             y.backward()
-
 
 if __name__ == "__main__":
     unittest.main()
