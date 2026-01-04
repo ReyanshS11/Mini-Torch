@@ -14,56 +14,80 @@ class Tensor:
 
     def numerical_grad(self, f, x, eps=1e-6):
         return (f(x + eps) - f(x - eps)) / (2 * eps)
+    
+    def unbroadcast(self, grad, shape):
+        while grad.ndim > len(shape):
+            grad = grad.sum(axis=0)
+            
+        for i, s in enumerate(shape):
+            if s == 1:
+                grad  = grad.sum(axis=i, keepdims=True)
 
-    def __add__(self, other: Tensor) -> Tensor:
+        return grad
+
+    def __add__(self, other) -> Tensor:
+        other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=self.requires_grad)
         out = Tensor(self.data + other.data, requires_grad=self.requires_grad or other.requires_grad)
         out._prev = {self, other}
 
         def _backward():
             if self.requires_grad:
-                self.grad = self.grad + out.grad if self.grad is not None else out.grad
+                grad = self.unbroadcast(out.grad, self.data.shape)
+                self.grad = self.grad + grad if self.grad is not None else grad
             if other.requires_grad:
-                other.grad = other.grad + out.grad if other.grad is not None else out.grad
+                grad = self.unbroadcast(out.grad, other.data.shape)
+                other.grad = other.grad + grad if other.grad is not None else grad
         
         out._backward = _backward
         return out
     
-    def __sub__(self, other: Tensor) -> Tensor:
+    def __sub__(self, other) -> Tensor:
+        other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=self.requires_grad)
         out = Tensor(self.data - other.data, requires_grad=self.requires_grad or other.requires_grad)
         out._prev = {self, other}
 
         def _backward():
             if self.requires_grad:
-                self.grad = self.grad + out.grad if self.grad is not None else out.grad
+                grad = self.unbroadcast(out.grad, self.data.shape)
+                self.grad = self.grad + grad if self.grad is not None else out.grad
             if other.requires_grad:
-                other.grad = other.grad - out.grad if other.grad is not None else -out.grad # type: ignore
+                grad = self.unbroadcast(out.grad, other.data.shape)
+                other.grad = other.grad - grad if other.grad is not None else -out.grad # type: ignore
         
         out._backward = _backward
         return out
     
-    def __mul__(self, other: Tensor) -> Tensor:
+    def __mul__(self, other) -> Tensor:
+        other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=self.requires_grad)
         out = Tensor(self.data * other.data, requires_grad=self.requires_grad or other.requires_grad)
         out._prev = {self, other}
 
         def _backward():
             if self.requires_grad:
-                self.grad = self.grad + out.grad * other.data if self.grad is not None else out.grad * other.data
+                grad = out.grad * other.data
+                grad = self.unbroadcast(grad, self.data.shape)
+                self.grad = self.grad + grad if self.grad is not None else grad
             if other.requires_grad:
-                other.grad = other.grad + out.grad * self.data if other.grad is not None else out.grad * self.data
+                grad = out.grad * self.data
+                grad = self.unbroadcast(grad, other.data.shape)
+                other.grad = other.grad + grad if other.grad is not None else grad
 
         out._backward = _backward
         return out
     
-    def __truediv__(self, other: Tensor) -> Tensor:
+    def __truediv__(self, other) -> Tensor:
+        other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=self.requires_grad)
         out = Tensor(self.data / other.data, requires_grad=self.requires_grad or other.requires_grad)
         out._prev = {self, other}
 
         def _backward():
             if self.requires_grad:
                 grad_x = out.grad / other.data
+                grad_x = self.unbroadcast(grad_x, self.data.shape)
                 self.grad = self.grad + grad_x if self.grad is not None else grad_x
             if other.requires_grad:
                 grad_y = -out.grad * self.data / (other.data ** 2) # type: ignore
+                grad_y = self.unbroadcast(grad_y, other.data.shape)
                 other.grad = other.grad + grad_y if other.grad is not None else grad_y
         
         out._backward = _backward
@@ -75,7 +99,8 @@ class Tensor:
 
         def _backward():
             if self.requires_grad:
-                self.grad = self.grad - out.grad if self.grad is not None else -out.grad # type: ignore
+                grad = self.unbroadcast(out.grad, self.data.shape)
+                self.grad = self.grad - grad if self.grad is not None else -grad # type: ignore
 
         out._backward = _backward
         return out
@@ -88,6 +113,7 @@ class Tensor:
         def _backward():
             if self.requires_grad:
                 grad = power * (self.data ** (power - 1)) * out.grad # type: ignore
+                grad = self.unbroadcast(grad, self.data.shape)
                 self.grad = self.grad + grad if self.grad is not None else grad
 
         out._backward = _backward
@@ -111,12 +137,35 @@ class Tensor:
 
         def _backward():
             if self.requires_grad:
-                grad = np.ones_like(self.data) * (out.grad / self.size) # type: ignore
+                grad = np.ones_like(self.data) * (out.grad / self.data.size) # type: ignore
                 self.grad = self.grad + grad if self.grad is not None else grad
         
         out._backward = _backward
         return out
     
+    def reshape(self, shape: list) -> Tensor:
+        def prod(shape):
+            p = 1
+            for s in shape:
+                p *= s
+            return p
+        
+        if prod(shape) != prod(self.data.shape):
+            raise ValueError(
+                f"reshape of shape {shape} not available for tensor of shape {self.data.shape}"
+            )
+
+        out = Tensor(self.data.reshape(shape), requires_grad=self.requires_grad)
+        out._prev = {self}
+
+        def _backward():
+            if self.requires_grad:
+                grad = out.grad.reshape(self.data.shape)  # type: ignore
+                self.grad = grad if self.grad is None else self.grad + grad
+
+        out._backward = _backward
+        return out
+
     def backward(self) -> None:
         if self.data.ndim != 0:
             raise RuntimeError(
@@ -138,27 +187,24 @@ class Tensor:
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        def unbroadcast(grad, shape):
-            while grad.ndim > len(shape):
-                grad = grad.sum(axis=0)
-            
-            for i, s in enumerate(shape):
-                if s == 1:
-                    grad  = grad.sum(axis=i, keepdims=True)
-
-            return grad
-
         for t in reversed(topo):
             t._backward()
-            t.grad = unbroadcast(t.grad, t.shape)
-    
-if __name__ == "__main__":
-    x = Tensor([[1], [2], [3]], requires_grad=True)
-    y = Tensor([[10, 20, 30, 40]], requires_grad=True)
 
-    z = x + y
-    loss = z.sum()
+if __name__ == "__main__":
+    x = Tensor(
+        [
+            [[1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0]],
+
+            [[7.0, 8.0, 9.0],
+            [10.0, 11.0, 12.0]]
+        ],
+        requires_grad=True
+    )
+
+    y = x.reshape([3, 2, 2])
+
+    loss = y.sum()
     loss.backward()
 
-    print(x.grad)  # [[4], [4], [4]]
-    print(y.grad)  # [[3, 3, 3, 3]]
+    print(y.data, "\n\n", y.grad)
