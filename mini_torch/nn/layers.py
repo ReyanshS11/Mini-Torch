@@ -1,8 +1,10 @@
 import numpy as np
-from mini_torch.core.tensor import Tensor
 import torch
 
-class Linear:
+from mini_torch.core.tensor import Tensor
+from .module import Module
+
+class Linear(Module):
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
         super().__init__()
         self.weight = Tensor(np.random.randn(out_features, in_features), requires_grad=True)
