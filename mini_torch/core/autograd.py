@@ -1,5 +1,6 @@
+from __future__ import annotations
 import numpy as np
-from tensor import Tensor
+from .tensor import Tensor
 
 def numerical_grad(f, x, eps=1e-6):
     return (f(x + eps) - f(x - eps)) / (2 * eps)

@@ -1,5 +1,6 @@
+from __future__ import annotations
 import numpy as np
-from tensor import Tensor
+from .tensor import Tensor
 
 def __add__(tns: Tensor, other) -> Tensor:
     other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=tns.requires_grad)
@@ -157,5 +158,17 @@ def reshape(tns: Tensor, shape) -> Tensor:
             grad = out.grad.reshape(tns.data.shape)  # type: ignore
             tns.grad = grad if tns.grad is None else tns.grad + grad
 
+    out._backward = _backward
+    return out
+
+def T(tns: Tensor) -> Tensor:
+    out = Tensor(tns.data.T, requires_grad=tns.requires_grad)
+    out._prev = {tns}
+
+    def _backward():
+        if tns.requires_grad:
+            grad = out.grad.T()
+            tns.grad = tns.grad + grad if tns.grad is not None else grad
+    
     out._backward = _backward
     return out

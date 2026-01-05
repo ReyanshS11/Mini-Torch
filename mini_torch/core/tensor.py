@@ -1,7 +1,5 @@
+from __future__ import annotations
 import numpy as np
-
-import autograd
-import ops
 
 class Tensor:
     def __init__(self, data, requires_grad=False):
@@ -19,45 +17,53 @@ class Tensor:
         return autograd.numerical_grad(f, x, eps)
     
     def unbroadcast(self, grad, shape):
-        return autograd.unbroadcast(grad, shape)
+        from .autograd import unbroadcast
+        return unbroadcast(grad, shape)
 
     def __add__(self, other) -> Tensor:
-        return ops.__add__(self, other)
+        from .ops import __add__
+        return __add__(self, other)
     
     def __sub__(self, other) -> Tensor:
-        return ops.__sub__(self, other)
+        from .ops import __sub__
+        return __sub__(self, other)
     
     def __mul__(self, other) -> Tensor:
-        return ops.__mul__(self, other)
+        from .ops import __mul__
+        return __mul__(self, other)
     
     def __truediv__(self, other) -> Tensor:
-        return ops.__truediv__(self, other)
+        from .ops import __truediv__
+        return __truediv__(self, other)
     
     def __neg__(self) -> Tensor:
-        return ops.__neg__(self)
+        from .ops import __neg__
+        return __neg__(self)
     
     def __pow__(self, power) -> Tensor:
-        return ops.__pow__(self, power)
+        from .ops import __pow__
+        return __pow__(self, power)
     
     def __matmul__(self, other) -> Tensor:
-        return ops.__matmul__(self, other)
+        from .ops import __matmul__
+        return __matmul__(self, other)
 
     def sum(self) -> Tensor:
-        return ops.sum(self)
+        from .ops import sum
+        return sum(self)
     
     def mean(self) -> Tensor:
-        return ops.mean(self)
+        from .ops import mean
+        return mean(self)
     
     def reshape(self, shape) -> Tensor:
-        return ops.reshape(self, shape)
+        from .ops import reshape
+        return reshape(self, shape)
+
+    def T(self) -> Tensor:
+        from .ops import T
+        return T(self)
 
     def backward(self) -> None:
-        autograd.backward(self)
-
-if __name__ == "__main__":
-    x = Tensor([[9.0, 1.0, 6.0], [1.0, 7.0, 2.0]], requires_grad=True)
-    y = Tensor([[4.0, 7.0], [2.0, 5.0], [8.0, 1.0]], requires_grad=True)
-
-    z = x @ y
-
-    print(x.data, "\n\n", y.data)
+        from .autograd import backward
+        backward(self)
