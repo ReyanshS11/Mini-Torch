@@ -1,3 +1,5 @@
+import numpy as np
+
 class Module:
     def parameters(self):
         params = []
@@ -11,4 +13,4 @@ class Module:
 
     def zero_grad(self):
         for p in self.parameters():
-            p.grad = None
+            p.grad = np.zeros_like(p.data)

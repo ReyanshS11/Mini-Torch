@@ -11,10 +11,11 @@ class SGD(Module):
 
     def zero_grad(self):
         for p in self.parameters:
-            p.grad = None
+            p.grad = np.zeros_like(p.data)
 
     def step(self):
         for p in self.parameters:
             if p.grad is None:
                 continue
+            np.clip(p.grad, -1.0, 1.0, out=p.grad)
             p.data -= self.lr * p.grad

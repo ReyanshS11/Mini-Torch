@@ -11,38 +11,50 @@ import numpy as np
 import pandas as pd
 
 data = pd.read_csv("Housing.csv")
-data = data.replace({"yes": 1, "no": 0, "furnished": 2, "semi-furnished": 1, "unfurnished": 0})
+data = data.replace({
+    "yes": 1,
+    "no": 0,
+    "furnished": 2,
+    "semi-furnished": 1,
+    "unfurnished": 0
+})
+
+# Normalize
 data = (data - data.mean()) / (data.std() + 1e-8)
 
-train = data[:500]
-test = data[500:]
+# Convert to numpy
+data_np = data.to_numpy(dtype=np.float32)
 
-full_ds = [[list(row[1:]), row[0]] for row in data.itertuples(index=False)]
+# First column = target, rest = features
+X = data_np[:, 1:]
+y = data_np[:, 0:1]   # keep as (N, 1)
 
 class TestData(Dataset):
-    def __init__(self, data) -> None:
+    def __init__(self, x, y) -> None:
         super().__init__()
-        self.data = data
+        self.x = x
+        self.y = y
     
     def __len__(self):
-        return len(self.data)
+        return len(self.x)
     
     def __getitem__(self, idx):
-        input_tns = self.data[idx][0]
-        label_tns = self.data[idx][1]
+        input_tns = self.x[idx]
+        label_tns = self.y[idx]
 
         return input_tns, label_tns
 
 if __name__ == "__main__":
-    dataset = TestData(full_ds)
+    dataset = TestData(X, y)
     dataset = DataLoader(dataset, 4)
 
     pytorch_model = nn.Linear(12, 1)
 
     model = Linear(12, 1)
-    model.weight = Tensor(pytorch_model.weight.tolist(), requires_grad=True)
+    model.weight = Tensor(pytorch_model.weight.detach().numpy(), requires_grad=True)
+    model.bias = Tensor(pytorch_model.bias.detach().numpy(), requires_grad=True)
 
-    optim = SGD(model.parameters(), lr=1e-5)
+    optim = SGD(model.parameters(), lr=1e-3)
     loss_fn = MSELoss()
 
     for epoch in range(10):

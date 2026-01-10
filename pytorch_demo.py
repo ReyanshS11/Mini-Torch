@@ -54,7 +54,7 @@ model = nn.Linear(12, 1)
 # -----------------------------
 # Optimizer and loss
 # -----------------------------
-optimizer = torch.optim.SGD(model.parameters(), lr=1e-5)
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 loss_fn = nn.MSELoss()
 
 # -----------------------------
@@ -75,3 +75,5 @@ for epoch in range(10):
         total_loss.append(loss.item())
 
     print(f"{epoch}: {np.mean(total_loss)}")
+
+# 0.3

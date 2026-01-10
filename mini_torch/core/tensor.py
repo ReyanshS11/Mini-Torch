@@ -2,10 +2,9 @@ from __future__ import annotations
 import numpy as np
 
 class Tensor:
-    def __init__(self, data, requires_grad=False):
-        self.data = np.asarray(data)
-        self.shape = self.data.shape
-        self.size = self.data.size
+    def __init__(self, data, dtype=np.float32, requires_grad=False):
+        self.dtype = dtype
+        self.data = np.asarray(data, dtype=self.dtype)
 
         self.requires_grad = requires_grad
         self.grad = None
@@ -14,7 +13,8 @@ class Tensor:
         self._backward = lambda: None
 
     def numerical_grad(self, f, x, eps=1e-6):
-        return autograd.numerical_grad(f, x, eps)
+        from .autograd import numerical_grad
+        return numerical_grad(f, x, eps)
     
     def unbroadcast(self, grad, shape):
         from .autograd import unbroadcast
@@ -63,6 +63,12 @@ class Tensor:
     def T(self) -> Tensor:
         from .ops import T
         return T(self)
+
+    def size(self):
+        return self.data.size
+
+    def shape(self):
+        return self.data.shape
 
     def backward(self) -> None:
         from .autograd import backward

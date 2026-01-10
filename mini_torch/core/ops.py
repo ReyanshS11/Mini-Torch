@@ -27,10 +27,10 @@ def __sub__(tns: Tensor, other) -> Tensor:
     def _backward():
         if tns.requires_grad:
             grad = unbroadcast(out.grad, tns.data.shape)
-            tns.grad = tns.grad + grad if tns.grad is not None else out.grad
+            tns.grad = tns.grad + grad if tns.grad is not None else grad
         if other.requires_grad:
             grad = unbroadcast(out.grad, other.data.shape)
-            other.grad = other.grad - grad if other.grad is not None else -out.grad # type: ignore
+            other.grad = other.grad - grad if other.grad is not None else -grad # type: ignore
     
     out._backward = _backward
     return out
@@ -78,7 +78,7 @@ def __neg__(tns: Tensor) -> Tensor:
     def _backward():
         if tns.requires_grad:
             grad = unbroadcast(out.grad, tns.data.shape)
-            tns.grad = tns.grad - grad if tns.grad is not None else -grad # type: ignore
+            tns.grad = tns.grad + (-grad) if tns.grad is not None else -grad # type: ignore
 
     out._backward = _backward
     return out
@@ -144,7 +144,8 @@ def mean(tns: Tensor) -> Tensor:
 
     def _backward():
         if tns.requires_grad:
-            grad = np.ones_like(tns.data) * (out.grad / tns.data.size) # type: ignore
+            grad = out.grad * np.ones_like(tns.data) / tns.data.size # type: ignore
+            grad = unbroadcast(grad, tns.data.shape)
             tns.grad = tns.grad + grad if tns.grad is not None else grad
     
     out._backward = _backward
