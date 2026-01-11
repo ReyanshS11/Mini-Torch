@@ -75,5 +75,3 @@ for epoch in range(10):
         total_loss.append(loss.item())
 
     print(f"{epoch}: {np.mean(total_loss)}")
-
-# 0.3

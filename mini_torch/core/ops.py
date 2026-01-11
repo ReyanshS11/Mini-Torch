@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 from .tensor import Tensor
-from .autograd import unbroadcast
+from .autograd import unbroadcast, numerical_grad
 
 def __add__(tns: Tensor, other) -> Tensor:
     other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=tns.requires_grad)

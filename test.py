@@ -39,7 +39,7 @@ y = Tensor(np.random.randn(4, 1), requires_grad=False)
 W = Tensor(np.random.randn(1, 3), requires_grad=True)
 b = Tensor(np.random.randn(1), requires_grad=True)
 
-def forward():
+def forward(something = None):
     out = x @ W.T() + b
     loss = ((out - y) * (out - y)).mean()
     return loss

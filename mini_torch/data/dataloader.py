@@ -22,6 +22,6 @@ class DataLoader:
 
             Xs, ys = zip(*batch)
             X = Tensor(np.stack(Xs), requires_grad=True)
-            y = Tensor(np.stack(Xs), requires_grad=True)
+            y = Tensor(np.stack(ys), requires_grad=False)
 
             yield X, y
