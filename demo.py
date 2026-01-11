@@ -19,15 +19,12 @@ data = data.replace({
     "unfurnished": 0
 })
 
-# Normalize
 data = (data - data.mean()) / (data.std() + 1e-8)
 
-# Convert to numpy
 data_np = data.to_numpy(dtype=np.float32)
 
-# First column = target, rest = features
 X = data_np[:, 1:]
-y = data_np[:, 0:1]   # keep as (N, 1)
+y = data_np[:, 0:1]
 
 class TestData(Dataset):
     def __init__(self, x, y) -> None:

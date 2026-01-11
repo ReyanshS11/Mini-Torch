@@ -6,9 +6,9 @@ from mini_torch.core.tensor import Tensor
 from .module import Module
 
 class Linear(Module):
-    def __init__(self, in_features: int, out_features: int, bias: bool = True):
+    def __init__(self, in_features: int, out_features: int, bias: bool = True, a = 5):
         super().__init__()
-        self.a = np.sqrt(5)
+        self.a = a
 
         self.weight = Tensor(_kaiming_init((out_features, in_features), out_features, self.a, 11), requires_grad=True)
 
