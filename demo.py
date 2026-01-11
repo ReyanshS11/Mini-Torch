@@ -51,8 +51,6 @@ if __name__ == "__main__":
     pytorch_model = nn.Linear(12, 1)
 
     model = Linear(12, 1)
-    model.weight = Tensor(pytorch_model.weight.detach().numpy(), requires_grad=True)
-    model.bias = Tensor(pytorch_model.bias.detach().numpy(), requires_grad=True)
 
     optim = SGD(model.parameters(), lr=1e-3)
     loss_fn = MSELoss()
