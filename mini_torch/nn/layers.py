@@ -3,6 +3,7 @@ import torch
 
 from .init import _kaiming_init
 from mini_torch.core.tensor import Tensor
+from mini_torch.core.ops import zeros_like, max
 from .module import Module
 
 class Linear(Module):
@@ -22,3 +23,10 @@ class Linear(Module):
         if self.bias is not None:
             x = x + self.bias
         return x
+    
+class ReLU(Module):
+    def __init__(self):
+        super().__init__()
+    
+    def __call__(self, x: Tensor) -> Tensor:
+        return max(zeros_like(x), x)

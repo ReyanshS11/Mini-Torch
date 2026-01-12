@@ -185,3 +185,56 @@ def T(tns: Tensor) -> Tensor:
     
     out._backward = _backward
     return out
+
+def iter(x):
+    x = x.data.tolist() if isinstance(x, Tensor) else x
+    
+    if not isinstance(x, list):
+        yield x
+    else:
+        for v in x:
+            iter(v)
+
+def zeros(shape, dtype=np.float32, requires_grad=False):
+    return Tensor(np.zeros(shape), dtype=dtype, requires_grad=requires_grad)
+
+def ones(shape, dtype=np.float32, requires_grad=False):
+    return Tensor(np.ones(shape), dtype=dtype, requires_grad=requires_grad)
+
+def zeros_like(tns: Tensor, dtype=np.float32, requires_grad=False):
+    return Tensor(np.zeros_like(tns), dtype=dtype, requires_grad=requires_grad)
+
+def ones_like(tns: Tensor, dtype=np.float32, requires_grad=False):
+    return Tensor(np.ones_like(tns), dtype=dtype, requires_grad=requires_grad)
+
+def max(tns: Tensor, other) -> Tensor:
+    other = other if isinstance(other, Tensor) else Tensor(other)
+    out = Tensor(np.maximum(tns.data, other.data), requires_grad=tns.requires_grad or other.requires_grad)
+    out._prev = {tns, other}
+
+    def _backward():
+        if tns.requires_grad:
+            grad = out.grad * (tns.data >= other.data) # type: ignore
+            tns.grad = tns.grad + grad if tns.grad is not None else grad
+        if other.requires_grad:
+            grad = out.grad * (other.data > tns.data) # type: ignore
+            other.grad = other.grad + grad if other.grad is not None else grad
+
+    out._backward = _backward
+    return out 
+
+def min(tns: Tensor, other) -> Tensor:
+    other = other if isinstance(other, Tensor) else Tensor(other)
+    out = Tensor(np.minimum(tns.data, other.data), requires_grad=tns.requires_grad or other.requires_grad)
+    out._prev = {tns, other}
+
+    def _backward():
+        if tns.requires_grad:
+            grad = out.grad * (tns.data <= other.data) # type: ignore
+            tns.grad = tns.grad + grad if tns.grad is not None else grad
+        if other.requires_grad:
+            grad = out.grad * (other.data < tns.data) # type: ignore
+            other.grad = other.grad + grad if other.grad is not None else grad
+
+    out._backward = _backward
+    return out

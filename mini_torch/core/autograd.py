@@ -16,7 +16,7 @@ def unbroadcast(grad, shape):
     return grad
 
 def backward(tns: Tensor) -> None:
-    if tns.data.ndim != 0:
+    if tns.data.ndim > 1:
         raise RuntimeError(
             "grad can be implicitly created only for scalar outputs"
         )
