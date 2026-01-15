@@ -48,6 +48,10 @@ class Tensor:
         from .ops import __matmul__
         return __matmul__(self, other)
 
+    def __getitem__(self, *idx):
+        from .ops import __getitem__
+        return __getitem__(self, idx)
+
     def sum(self) -> Tensor:
         from .ops import sum
         return sum(self)
@@ -60,9 +64,9 @@ class Tensor:
         from .ops import reshape
         return reshape(self, shape)
 
-    def T(self) -> Tensor:
+    def T(self, axes = None) -> Tensor:
         from .ops import T
-        return T(self)
+        return T(self, axes)
 
     def size(self):
         return self.data.size

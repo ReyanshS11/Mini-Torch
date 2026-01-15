@@ -1,5 +1,5 @@
 from mini_torch.core.tensor import Tensor
-from mini_torch.nn.layers import Linear
+from mini_torch.nn.layers import Linear, Conv1d, ReLU
 from mini_torch.nn.loss import MSELoss
 from mini_torch.optim.sgd import SGD
 from mini_torch.data.dataset import Dataset
@@ -44,8 +44,6 @@ class TestData(Dataset):
 if __name__ == "__main__":
     dataset = TestData(X, y)
     dataset = DataLoader(dataset, 4)
-
-    pytorch_model = nn.Linear(12, 1)
 
     model = Linear(12, 1)
 

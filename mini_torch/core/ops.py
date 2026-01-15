@@ -174,15 +174,32 @@ def reshape(tns: Tensor, shape) -> Tensor:
     out._backward = _backward
     return out
 
-def T(tns: Tensor) -> Tensor:
-    out = Tensor(tns.data.T, requires_grad=tns.requires_grad)
+def T(tns: Tensor, axes=None) -> Tensor:
+    if axes is None:
+        axes = tuple(reversed(range(len(tns.shape()))))
+
+    out = Tensor(tns.data.transpose(axes), requires_grad=tns.requires_grad)
     out._prev = {tns}
 
     def _backward():
         if tns.requires_grad:
-            grad = out.grad.T
+            grad = out.grad.transpose(axes)
             tns.grad = tns.grad + grad if tns.grad is not None else grad
     
+    out._backward = _backward
+    return out
+
+def __getitem__(tns: Tensor, *idx) -> Tensor:
+    idx = idx[0][0]
+    out = Tensor(tns.data[idx], requires_grad=tns.requires_grad)
+    out._prev = {tns}
+
+    def _backward():
+        if tns.requires_grad:
+            if tns.grad is None:
+                tns.grad = np.zeros_like(tns.data)
+            tns.grad[idx] += out.grad
+
     out._backward = _backward
     return out
 
@@ -235,6 +252,36 @@ def min(tns: Tensor, other) -> Tensor:
         if other.requires_grad:
             grad = out.grad * (other.data < tns.data) # type: ignore
             other.grad = other.grad + grad if other.grad is not None else grad
+
+    out._backward = _backward
+    return out
+
+def stack(tensors: list[Tensor], axis=0) -> Tensor:
+    out = Tensor(np.stack([t.data for t in tensors], axis=axis), requires_grad=any(t.requires_grad for t in tensors))
+    out._prev = set(t for t in tensors)
+
+    def _backward():
+        for i, t in enumerate(tensors):
+            if t.requires_grad:
+                grad_slice = np.take(out.grad, i, axis=axis) # type: ignore
+                t.grad = t.grad + grad_slice if t.grad is not None else grad_slice
+
+    out._backward = _backward
+    return out
+
+def cat(tns: Tensor, other, axis=0) -> Tensor:
+    other = other if isinstance(other, Tensor) else Tensor(other, requires_grad=tns.requires_grad)
+    out = Tensor(np.concatenate([tns.data, other.data], axis=axis), requires_grad=tns.requires_grad or other.requires_grad)
+    out._prev = {tns, other}
+
+    def _backward():
+        grad_tns = out.grad[:tns.data.shape[0]]
+        grad_other = out.grad[tns.data.shape[0]:]
+
+        if tns.requires_grad:
+            tns.grad = tns.grad + grad_tns if tns.grad is not None else grad_tns
+        if other.requires_grad:
+            other.grad = other.grad + grad_other if other.grad is not None else grad_other
 
     out._backward = _backward
     return out
