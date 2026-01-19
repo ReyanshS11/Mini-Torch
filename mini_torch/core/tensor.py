@@ -12,6 +12,8 @@ class Tensor:
         self._prev = set()
         self._backward = lambda: None
 
+        self.velocity = 0
+
     def numerical_grad(self, f, x, eps=1e-6):
         from .autograd import numerical_grad
         return numerical_grad(f, x, eps)
