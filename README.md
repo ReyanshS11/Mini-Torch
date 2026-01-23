@@ -4,19 +4,19 @@ A **from-scratch deep learning framework** built in pure Python and NumPy, inspi
 
 This project is for **learning purposes** and focuses on implementing:
 
-- ✅ Autograd
-- ✅ Tensors with gradient tracking
-- ✅ Neural network layers
-- ✅ Loss functions
-- ✅ Optimizers (SGD, Adam, etc.)
-- ✅ DataLoader & Dataset abstractions
-- ✅ Training loops and models
+- Autograd
+- Tensors with gradient tracking
+- Neural network layers
+- Loss functions
+- Optimizers (SGD, Adam, etc.)
+- DataLoader & Dataset abstractions
+- Training loops and models
 
 ---
 
 ## 📦 Features
 
-- **Tensor class** with:
+- **Tensor Class**:
   - Gradient tracking (`requires_grad=True`)
   - Backpropagation via `.backward()`
   - Basic ops: +, -, *, /, @, **, //
@@ -146,9 +146,8 @@ for epoch in range(100):
 ## 🎯 Goals of This Project
 
 - Understand **how PyTorch works internally**
-- Learn how **autograd engines** are built
+- Learn how **gradients and autograd** work
 - Learn how **optimizers** and **layers** are implemented
-- Build intuition for **backpropagation and computational graphs**
 
 ---
 
@@ -158,7 +157,6 @@ This is a **learning framework**, not meant for production use.
 
 - ❌ Not very optmized
 - ❌ No GPU
-- ✅ 100% educational value
 
 ---
 
