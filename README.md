@@ -147,6 +147,14 @@ for epoch in range(100):
 
 ---
 
+## Speed Comparison (vs. PyTorch)
+
+![Comparison Graph](benchmark\training_time_comparison_MiniTorch_PyTorch.png)
+
+**All tests were run on the default benchmark found in ./benchmark 
+
+---
+
 ## 🎯 Goals of This Project
 
 - Understand **how PyTorch works internally**

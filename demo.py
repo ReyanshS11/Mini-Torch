@@ -1,15 +1,14 @@
 from mini_torch.core.tensor import Tensor
-from mini_torch.nn.layers import Linear, Conv1d, ReLU
-from mini_torch.nn.loss import MSELoss, BCELoss
+from mini_torch.nn.layers import Linear
+from mini_torch.nn.loss import MSELoss
 from mini_torch.optim.sgd import SGD
-from mini_torch.optim.adam import Adam
 from mini_torch.data.dataset import Dataset
 from mini_torch.data.dataloader import DataLoader
 
-import torch
 import torch.nn as nn
 import numpy as np
 import pandas as pd
+import time   # <-- add this
 
 data = pd.read_csv("Housing.csv")
 data = data.replace({
@@ -39,8 +38,8 @@ class TestData(Dataset):
     def __getitem__(self, idx):
         input_tns = self.x[idx]
         label_tns = self.y[idx]
-
         return input_tns, label_tns
+
 
 if __name__ == "__main__":
     dataset = TestData(X, y)
@@ -50,6 +49,8 @@ if __name__ == "__main__":
 
     optim = SGD(model.parameters(), lr=1e-3)
     loss_fn = MSELoss()
+
+    start_time = time.perf_counter()   # start timer
 
     for epoch in range(10):
         total_loss = []
@@ -69,3 +70,7 @@ if __name__ == "__main__":
             total_loss.append(loss.data)
 
         print(f"{epoch}: {np.mean(total_loss)}")
+
+    end_time = time.perf_counter()   # end timer
+
+    print(f"\nTotal runtime: {end_time - start_time:.6f} seconds")

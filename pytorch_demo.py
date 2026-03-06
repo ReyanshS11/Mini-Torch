@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import pandas as pd
+import time   # <-- add this
 
 # -----------------------------
 # Load and preprocess data
@@ -25,7 +26,7 @@ data_np = data.to_numpy(dtype=np.float32)
 
 # First column = target, rest = features
 X = data_np[:, 1:]
-y = data_np[:, 0:1]   # keep as (N, 1)
+y = data_np[:, 0:1]
 
 # -----------------------------
 # Dataset
@@ -58,6 +59,8 @@ model = nn.Linear(12, 1)
 optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 loss_fn = nn.MSELoss()
 
+start_time = time.perf_counter()   # start timer
+
 # -----------------------------
 # Training loop
 # -----------------------------
@@ -76,3 +79,7 @@ for epoch in range(10):
         total_loss.append(loss.item())
 
     print(f"{epoch}: {np.mean(total_loss)}")
+
+end_time = time.perf_counter()   # end timer
+
+print(f"\nTotal runtime: {end_time - start_time:.6f} seconds")

@@ -44,8 +44,6 @@ if __name__ == "__main__":
     dataset = TestData(X, y)
     dataset = DataLoader(dataset, 4)
 
-    pytorch_model = nn.Linear(12, 1)
-
     model = Linear(12, 1)
 
     optim = SGD(model.parameters(), lr=1e-3)
@@ -70,5 +68,5 @@ if __name__ == "__main__":
 
         print(f"{epoch}: {np.mean(total_loss)}")
 
-# Final Loss: ~0.326
-# PyTorch Equivalent Final Loss: ~0.330
+# Final Loss: ~0.326, Total Time Taken: (for 10 epochs, ~0.5s; for 100 epochs, ~3.9s)
+# PyTorch Equivalent Final Loss: ~0.330, Total Time Taken: (for 10 epochs, ~1.2s; for 100 epochs, ~11.2s)
